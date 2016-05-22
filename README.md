@@ -12,7 +12,12 @@ img.fill(120)
 
 spout1.send('image', img)
 ```
+## Info
 used [pybind11](https://github.com/pybind/pybind11). to bind [spout](http://spout.zeal.co/) c++
+
+convert 3 or 4 channels image buffer to dx11 texture
+
+the numpy array need be 3 dimensions
 
 ## Installation
 * Change includes: python, numpy and pybind11
