@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <IncludePath>C:\Anaconda3\envs\py33\include;C:\Anaconda3\envs\py33\Lib\site-packages\numpy\core\include;C:\Users\ale\Documents\GitHub\pybind11\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Anaconda3\envs\py33\libs;C:\Anaconda3\envs\py33\Lib\site-packages\numpy\core\lib;$(LibraryPath)</LibraryPath>
+    <TargetExt>.pyd</TargetExt>
+    <TargetName>spout</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <OutputFile>$(OutDir)..\..\bin\$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
