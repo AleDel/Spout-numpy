@@ -32,10 +32,8 @@ public:
 		
 		auto buffer = cvimage.request();
 		
-		// only with 3 dimensions 
 		if (buffer.ndim != 3 ) {
-			//throw std::runtime_error("Number of dimensions must be 3");
-			
+			//throw std::runtime_error("Number of dimensions must be 3");	
 			return 0;
 		}
 
@@ -47,8 +45,6 @@ public:
 			g_D3D11Device = sdx.CreateDX11device();
 			g_D3D11Device->GetImmediateContext(&g_pImmediateContext);
 		}
-		
-		
 
 		if (sendingTexture == NULL) {
 
