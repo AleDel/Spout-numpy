@@ -87,6 +87,115 @@ public:
 		return 1;
 	}
 
+	py::array_t<uint8_t, py::array::c_style> receive(const std::string name) {
+		if (g_D3D11Device == nullptr) {
+			g_D3D11Device = sdx.CreateDX11device();
+			g_D3D11Device->GetImmediateContext(&g_pImmediateContext);
+		}
+		unsigned int w, h = 64;
+		HANDLE sharedHandle = NULL;
+		DWORD dwFormat;
+		uint8_t* aasource = nullptr;
+		//BYTE* aasource = nullptr;
+		if (spoutsendernames.GetSenderInfo(name.c_str(), w, h, sharedHandle, dwFormat)) {
+		//if ( spoutsendernames.FindSender((char*)name.c_str(), w, h, sharedHandle, dwFormat) ) {
+			//printf("CreateInterop - %dx%d - dwFormat (%d) \n", w, h, dwFormat);
+			ID3D11Resource * tempResource11 = nullptr;
+			HRESULT openResult = g_D3D11Device->OpenSharedResource(sharedHandle, __uuidof(ID3D11Resource), (void**)(&tempResource11));
+			
+			D3D11_RESOURCE_DIMENSION aa;
+			tempResource11->GetType(&aa);
+			//printf("tipo de recurso: %d", aa);
+			
+			ID3D11Texture2D* tex = (ID3D11Texture2D*)tempResource11;
+			
+
+			D3D11_TEXTURE2D_DESC description;
+			tex->GetDesc(&description);
+			description.BindFlags = 0;
+			description.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+			description.Usage = D3D11_USAGE_STAGING;
+
+			ID3D11Texture2D* texTemp = NULL;
+
+			HRESULT hr = g_D3D11Device->CreateTexture2D(&description, NULL, &texTemp);
+			if (FAILED(hr))
+			{
+				if (texTemp)
+				{
+					texTemp->Release();
+					texTemp = NULL;
+				}
+				return NULL;
+			}
+			g_pImmediateContext->CopyResource(texTemp, tex);
+
+
+			D3D11_MAPPED_SUBRESOURCE  mapResource;
+			g_pImmediateContext->Map(texTemp, 0, D3D11_MAP_READ, NULL, &mapResource);
+
+			//printf("mapResource.RowPitch: %x", mapResource.RowPitch);
+
+			const int pitch = mapResource.RowPitch;
+			uint8_t* source = (uint8_t*)(mapResource.pData);
+			uint8_t* dest = new uint8_t[(w)*(h) * 4];
+			
+			uint8_t* destTemp = dest;
+			for (int i = 0; i < h; ++i)
+			{
+				memcpy(destTemp, source, w * 4);
+				source += pitch;
+				destTemp += w * 4;
+			}
+			
+			aasource = dest;
+			
+			/*//aasource = reinterpret_cast<uint8_t*>(dest);*/
+			g_pImmediateContext->Unmap(texTemp, 0);
+			texTemp->Release();
+			texTemp = NULL;
+			
+
+		}
+		else {
+			printf("not found sender named: %s", name);
+		}
+
+		/*
+		uint8_t* rgba = new uint8_t[w*h * 4];
+		
+		int e = 0;
+		for (int i = 0; i < w*h * 4; i++) {
+			switch (i%4)
+			{
+			case 0:
+				rgba[i] = 255;
+				break;
+			case 1:
+				rgba[i] = 0;
+				break;
+			case 2:
+				rgba[i] = 0;
+				break;
+			case 3:
+				rgba[i] = 255;
+				break;
+			}
+
+		}*/
+		auto result = py::array(py::buffer_info(
+			aasource,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+			sizeof(uint8_t),     /* Size of one item */
+			py::format_descriptor<uint8_t>::value, /* Buffer format */
+			3,//buf1.ndim,          /* How many dimensions? */
+			{ h, w, 4},  /* Number of elements for each dimension */
+			{ sizeof(uint8_t)*w*4, sizeof(uint8_t)*4 , sizeof(uint8_t)} /* Strides for each dimension */
+		));
+		free(aasource);
+		
+		return result;
+	}
+	
 	std::string name;
 	py::array_t<uint8_t, py::array::c_style> cvimage;
 
@@ -113,6 +222,7 @@ PYBIND11_PLUGIN(spout) {
 		.def("setName", &Spoutnumpy::setName)
 		.def("getName", &Spoutnumpy::getName)
 		.def("send", &Spoutnumpy::send, "A function which test Spout sender spout")
+		.def("receive",&Spoutnumpy::receive)
 		.def("__repr__",
 			[](const Spoutnumpy &a) {
 				return "<spout '" + a.name + "'>";
