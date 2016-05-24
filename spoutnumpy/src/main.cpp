@@ -109,11 +109,10 @@ public:
 			
 			ID3D11Texture2D* tex = (ID3D11Texture2D*)tempResource11;
 			
-
 			D3D11_TEXTURE2D_DESC description;
 			tex->GetDesc(&description);
 			description.BindFlags = 0;
-			description.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+			description.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 			description.Usage = D3D11_USAGE_STAGING;
 
 			ID3D11Texture2D* texTemp = NULL;
@@ -128,30 +127,16 @@ public:
 				}
 				return NULL;
 			}
+
 			g_pImmediateContext->CopyResource(texTemp, tex);
 
 
 			D3D11_MAPPED_SUBRESOURCE  mapResource;
 			g_pImmediateContext->Map(texTemp, 0, D3D11_MAP_READ, NULL, &mapResource);
+			//g_pImmediateContext->Unmap(texTemp, 0);
 
-			//printf("mapResource.RowPitch: %x", mapResource.RowPitch);
-
-			const int pitch = mapResource.RowPitch;
-			uint8_t* source = (uint8_t*)(mapResource.pData);
-			uint8_t* dest = new uint8_t[(w)*(h) * 4];
+			aasource = (uint8_t*)(mapResource.pData);
 			
-			uint8_t* destTemp = dest;
-			for (int i = 0; i < h; ++i)
-			{
-				memcpy(destTemp, source, w * 4);
-				source += pitch;
-				destTemp += w * 4;
-			}
-			
-			aasource = dest;
-			
-			/*//aasource = reinterpret_cast<uint8_t*>(dest);*/
-			g_pImmediateContext->Unmap(texTemp, 0);
 			texTemp->Release();
 			texTemp = NULL;
 			
@@ -161,28 +146,6 @@ public:
 			printf("not found sender named: %s", name);
 		}
 
-		/*
-		uint8_t* rgba = new uint8_t[w*h * 4];
-		
-		int e = 0;
-		for (int i = 0; i < w*h * 4; i++) {
-			switch (i%4)
-			{
-			case 0:
-				rgba[i] = 255;
-				break;
-			case 1:
-				rgba[i] = 0;
-				break;
-			case 2:
-				rgba[i] = 0;
-				break;
-			case 3:
-				rgba[i] = 255;
-				break;
-			}
-
-		}*/
 		auto result = py::array(py::buffer_info(
 			aasource,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
 			sizeof(uint8_t),     /* Size of one item */
@@ -191,7 +154,6 @@ public:
 			{ h, w, 4},  /* Number of elements for each dimension */
 			{ sizeof(uint8_t)*w*4, sizeof(uint8_t)*4 , sizeof(uint8_t)} /* Strides for each dimension */
 		));
-		free(aasource);
 		
 		return result;
 	}
