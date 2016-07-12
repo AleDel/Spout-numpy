@@ -18,7 +18,7 @@ spout1.send('image', img)
 * the numpy array need be 3 dimensions
 
 ## Installation
-* Change includes: python, numpy and pybind11
+* Change includes: python, numpy and pybind11 (Property Manager windows in visualstudio)
 * Compile, copy 'spout.pyd' to accessible folder
 
 
